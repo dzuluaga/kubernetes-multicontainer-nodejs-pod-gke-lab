@@ -109,3 +109,36 @@ kubernetes-multi-container-pod   LoadBalancer   10.35.249.82   35.230.95.143   8
 
 ### Step 10: Test access from nodejs-api to nodejs-backend
 
+```
+$ curl 35.230.63.8/hello
+```
+Response:
+```
+Hello world-backend
+```
+
+This response validates that nodejs-api can call nodejs-backend.
+
+### Troubleshooting
+
+#### Bash into the container to test curl
+
+```
+$ kubectl exec -it kubernetes-multi-container-pod -- /bin/sh
+
+or to ssh into a specific container:
+kubectl exec -it kubernetes-multi-container-pod -c nodejs-express-backend -- /bin/sh
+
+
+From here you can run requests to test connectivity:
+```
+$ curl http://localhost:8080/hello
+Hello world-backend
+
+To backend:
+$ curl http://localhost:8081
+```
+Response
+```
+Hello world-backend
+```
