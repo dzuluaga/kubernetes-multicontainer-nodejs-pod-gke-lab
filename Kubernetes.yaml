@@ -6,9 +6,9 @@ metadata:
     app: mcpod
 spec:
   containers:
-  - name: nodejs-express-microservice-backend 
-    image: gcr.io/diego-labs-2/nodejs-express-microservice-backend:v1
-  - name: hello-world-app
-    image: gcr.io/diego-labs-2/hello-app:v1
+  - name: nodejs-express-backend 
+    image: gcr.io/$GCP_PROJECT/nodejs-express-backend:v1
+  - name: nodejs-express-api
+    image: gcr.io/$GCP_PROJECT/nodejs-express-api:v1
     ports:
     - containerPort: 8080
