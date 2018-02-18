@@ -13,7 +13,11 @@ app.get('/hello', (req, res) => {
   if (req.header('Skip-Backend')) {
     return res.send('Hello world-API\n');
   }
-  request('http://localhost:8081').pipe(res);
+  request('http://localhost:8081')
+    .on('error', (err) => {
+      res.send('backend not reachable at the moment on localhost.');
+    })
+    .pipe(res);
 });
 
 app.listen(PORT, HOST);
