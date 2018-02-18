@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kubernetes-multi-container-pod
+  labels:
+    app: mcpod
+spec:
+  containers:
+  - name: nodejs-express-microservice-backend 
+    image: gcr.io/diego-labs-2/nodejs-express-microservice-backend:v1
+  - name: hello-world-app
+    image: gcr.io/diego-labs-2/hello-app:v1
+    ports:
+    - containerPort: 8080
