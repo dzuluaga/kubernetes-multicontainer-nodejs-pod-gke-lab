@@ -14,9 +14,6 @@ All this without having to run two separate clusters and a fully managed Kuberne
 
 You can run these steps in Kubernetes GCP free-tier. However, I recommend running on n1-standard-1 machines. I noticeds some pods getting into errors because of the lack of hardware resources.
 
-[TODO Purpose]
-[TODO Image]
-
 ### Step 0: Clone this repo
 ```
 git clone https://github.com/dzuluaga/kubernetes-multicontainer-pod-lab.git
