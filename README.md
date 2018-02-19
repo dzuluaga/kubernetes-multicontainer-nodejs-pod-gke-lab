@@ -1,5 +1,16 @@
-kubernetes-multicontainer-pod Node.js on GCP Kubernetes
+Kubernetes multicontainer Node.js pod on GKE
 ===============================================================
+
+### Why do you need multicontainer pods?
+You will probably need this deployment model if you want to specialize your code. For instance, two http containers:
+
+1. **For the execution of certain API Management policies** like validate a token, apply spike arrest, apply quota restrictions, etc.
+
+2. **For the execution of the business rules** perhaps payload transformations, mashups (calling multiple APIs), etc.
+
+All this without having to run two separate clusters and a fully managed Kubernetes cluster. Which means, if inside this multicontainer pod something fails, be it the api or the backend apps, k8s then would detect the failure and replace the entire pod.
+
+![](./deployment-model-multicontainer-pods.png)
 
 You can run these steps in Kubernetes GCP free-tier. However, I recommend running on n1-standard-1 machines. I noticeds some pods getting into errors because of the lack of hardware resources.
 
