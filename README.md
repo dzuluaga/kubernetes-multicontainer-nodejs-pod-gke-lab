@@ -1,7 +1,8 @@
 kubernetes-multicontainer-pod Node.js on GCP Kubernetes
 ===============================================================
 
-You can run these steps in Kubernetes GCP free-tier.
+You can run these steps in Kubernetes GCP free-tier. However, I recommend running on n1-standard-1 machines. I noticeds some pods getting into errors because of the lack of hardware resources.
+
 [TODO Purpose]
 [TODO Image]
 
@@ -51,10 +52,10 @@ Hello world-backend
 In the next steps we will deploy a multicontainer pod with these two apps.
 
 ### Step 4: Login to console.cloud.google.com start CloudShell
-Create a cluster of 3 VMs f1-micro for our two node.js apps.
+Create a cluster of 3 VMs n1-standard-1 for our two node.js apps.
 
 ```
-gcloud container clusters create multi-container-pod --num-nodes=3 --machine-type=f1-micro --zone=us-west1-a
+gcloud container clusters create multi-container-pod --num-nodes=3 --machine-type=n1-standard-1 --zone=us-west1-a
 ```
 
 ### Step 5: Set PROJECT_ID environment variable
@@ -88,13 +89,17 @@ gcloud docker -- push gcr.io/${PROJECT_ID}/nodejs-express-backend:v1
 ### Step 8: Create our pod
 Edit `Kubernetes.yaml` and replace `$GCP_PROJECT` token with your GCP project.
 ```bash
-$ kubectl apply -f Kubernetes.yaml
+$ kubectl apply -f kubernetes_nodejs_deployment.yaml
 ```
 
 ### Step 9: Expose port
 
 ```bash
-$ kubectl expose pod kubernetes-multi-container-pod --type=LoadBalancer --port=80 --target-port=8080
+$ kubectl expose deployment multicontainer-nodejs-deployment --type=LoadBalancer --port=80 --target-port=8080
+```
+
+```bash
+$ kubectl expose deployment multicontainer-nodejs-deployment --type=LoadBalancer --port=80 --target-port=8080
 ```
 
 **Get Public IP Address**
@@ -104,7 +109,7 @@ $ kubectl get service
 Response:
 ```
 NAME                             TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)        AGE
-kubernetes-multi-container-pod   LoadBalancer   10.35.249.82   35.230.95.143   80:32720/TCP   1m
+multicontainer-nodejs-deployment   LoadBalancer   10.35.249.82   35.230.95.143   80:32720/TCP   1m
 ```
 
 ### Step 10: Test access from nodejs-api to nodejs-backend
@@ -128,7 +133,7 @@ $ kubectl exec -it kubernetes-multi-container-pod -- /bin/sh
 
 or to ssh into a specific container:
 kubectl exec -it kubernetes-multi-container-pod -c nodejs-express-backend -- /bin/sh
-
+```
 
 From here you can run requests to test connectivity:
 ```

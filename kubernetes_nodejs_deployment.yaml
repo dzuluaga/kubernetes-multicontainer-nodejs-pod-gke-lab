@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1 
+kind: Deployment
+metadata:
+  name: multicontainer-nodejs-deployment 
+  labels:
+    app: multicontainer-nodejs 
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nodejs-api-backend 
+  template:
+    metadata:
+      labels:
+        app: nodejs-api-backend
+    spec:
+      containers:
+      - name: nodejs-express-api
+        image: gcr.io/mykubernetes-195606/nodejs-express-api:v3 
+        ports: 
+        - containerPort: 8080
+      - name: nodejs-express-backend 
+        image: gcr.io/mykubernetes-195606/nodejs-express-backend:v1 
+        ports: 
+        - containerPort: 8081
