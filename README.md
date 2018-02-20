@@ -1,7 +1,7 @@
 Kubernetes multicontainer NodeJS API pod on GKE
 ===============================================================
 
-In this tutorial I'll be walking you through the creation of a multicontainer pod with two apps: a NodeJS REST API, and another Node.js API that serves as the backend. Everything running in Kubernetes. And more specifically, on GKE (Google Kubernetes Engine).
+In this tutorial I'll be walking you through the creation of a multicontainer pod with two apps: a NodeJS REST API, and another NodeJS API that serves as the backend. Everything running in Kubernetes. And more specifically, on GKE (Google Kubernetes Engine).
 
 This tutorial is based on the awesome [Deploying a containerized web application tutorial](https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app), which introduced me to Kubernetes. However, as I'll be leveraging multicontainer pod deployment model in future tutorials, I decided to write one with the purpose of augmenting it.
 
@@ -9,12 +9,12 @@ This tutorial is based on the awesome [Deploying a containerized web application
 
 
 ### Why do you need multicontainer pods?
-There are multiple reasons for this. Keep on reading to find them.
+There are multiple reasons for this. Allow me to elaborate my reasons.
 
 #### TL;DR
 This tutorial has two NodeJS Express HTTP containers that aim to separate responsibilites of API Management and backend (business rules):
 
-1. **For the execution of certain API Management policies** like validate a token, apply spike arrest, apply quota restrictions, etc. In the future Apigee Microgateway. Stay tuned.
+1. **For the execution of certain API Management policies** like validate a token, apply spike arrest, apply quota restrictions, etc. E.g. in the near future, I might want to use Apigee Microgateway. Stay tuned for another tutorial on this.
 
 2. **For the execution of the business rules** perhaps payload transformations, mashups (calling multiple APIs and consolidating responses), etc.
 
@@ -22,7 +22,7 @@ Let me expand on the above, as I'll build on top of this tutorial for future con
 
 * **To add API Management capabilities.** In my case, I'm using a plain NodeJS app, for the sake of keeping this tutorial as simple as possible and reusable. However, you can use anything more sophisticated. For instance, [Apigee Microgateway](https://docs.apigee.com/microgateway/content/edge-microgateway-home), which you can also run on Docker. Full disclosure, I work for Google Apigee, hence my familiarity with this product.
 * **To add transformation/mediation capabilities without increasing the complexity of my current codebase to either API management or Transformation/mediation layers**. API Management is a separate responsibility, hence it should be separate container from transformation and mediation capabilities (another container). 
-* **To leverage the same k8s cluster as of my REST API.** Adding transformation/mediation NodeJS app should not increase the complexity of my infrastructure (my cluster). If the REST API and transformation/mediation NodeJS API coexist in the same pod, Kubernetes will manage the pod and keep both containers healthy without adding a separate cluster for both containers. Some purists might be against this model, but I won't into that conversation at this point.
+* **To leverage the same k8s cluster and pod that the REST API use.** Adding transformation/mediation NodeJS app should not increase the complexity of my infrastructure (my cluster). If the REST API and transformation/mediation NodeJS API coexist in the same pod, Kubernetes will manage the pod and keep both containers healthy without adding a separate cluster for both containers. Some purists might be against this model, but I won't into that conversation at this point.
 
 You can run these steps in Kubernetes [GCP free-tier](https://cloud.google.com/free) for a few bucks covered by the 300 credit. I recommend running on n1-standard-1 machines, since I noticed some pods getting into errors because of the lack of running Kubernetes on small footprint hardware such as micro VMs (06 GBs) ¯\_(ツ)_/¯.
 
