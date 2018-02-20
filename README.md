@@ -1,26 +1,54 @@
-Kubernetes multicontainer Node.js pod on GKE
+Kubernetes multicontainer NodeJS API pod on GKE
 ===============================================================
 
-### Why do you need multicontainer pods?
-You will probably need this deployment model if you want to specialize your code. For instance, two http containers:
+In this tutorial I'll be walking you through the creation of a multicontainer pod with two apps: a NodeJS REST API, and another Node.js API that serves as the backend. Everything running in Kubernetes. And more specifically, on GKE (Google Kubernetes Engine).
 
-1. **For the execution of certain API Management policies** like validate a token, apply spike arrest, apply quota restrictions, etc.
-
-2. **For the execution of the business rules** perhaps payload transformations, mashups (calling multiple APIs), etc.
-
-All this without having to run two separate clusters and a fully managed Kubernetes cluster. Which means, if inside this multicontainer pod something fails, be it the api or the backend apps, k8s then would detect the failure and replace the entire pod.
+This tutorial is based on the awesome [Deploying a containerized web application tutorial](https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app), which introduced me to Kubernetes. However, as I'll be leveraging multicontainer pod deployment model in future tutorials, I decided to write one with the purpose of augmenting it.
 
 ![](./deployment-model-multicontainer-pods.png)
 
-You can run these steps in Kubernetes GCP free-tier. However, I recommend running on n1-standard-1 machines. I noticeds some pods getting into errors because of the lack of hardware resources.
+
+### Why do you need multicontainer pods?
+There are multiple reasons for this. Keep on reading to find them.
+
+#### TL;DR
+This tutorial has two NodeJS Express HTTP containers that aim to separate responsibilites of API Management and backend (business rules):
+
+1. **For the execution of certain API Management policies** like validate a token, apply spike arrest, apply quota restrictions, etc. In the future Apigee Microgateway. Stay tuned.
+
+2. **For the execution of the business rules** perhaps payload transformations, mashups (calling multiple APIs and consolidating responses), etc.
+
+Let me expand on the above, as I'll build on top of this tutorial for future content.
+
+* **To add API Management capabilities.** In my case, I'm using a plain NodeJS app, for the sake of keeping this tutorial as simple as possible and reusable. However, you can use anything more sophisticated. For instance, [Apigee Microgateway](https://docs.apigee.com/microgateway/content/edge-microgateway-home), which you can also run on Docker. Full disclosure, I work for Google Apigee, hence my familiarity with this product.
+* **To add transformation/mediation capabilities without increasing the complexity of my current codebase to either API management or Transformation/mediation layers**. API Management is a separate responsibility, hence it should be separate container from transformation and mediation capabilities (another container). 
+* **To leverage the same k8s cluster as of my REST API.** Adding transformation/mediation NodeJS app should not increase the complexity of my infrastructure (my cluster). If the REST API and transformation/mediation NodeJS API coexist in the same pod, Kubernetes will manage the pod and keep both containers healthy without adding a separate cluster for both containers. Some purists might be against this model, but I won't into that conversation at this point.
+
+You can run these steps in Kubernetes [GCP free-tier](https://cloud.google.com/free) for a few bucks covered by the 300 credit. I recommend running on n1-standard-1 machines, since I noticed some pods getting into errors because of the lack of running Kubernetes on small footprint hardware such as micro VMs (06 GBs) ¯\_(ツ)_/¯.
 
 ### Step 0: Clone this repo
+First things first, clone this repo either on your laptop or GCP CloudShell.
 ```
 git clone https://github.com/dzuluaga/kubernetes-multicontainer-pod-lab.git
 ```
 
+**The folder structure:**
+```bash
+├── kubernetes_nodejs_deployment.yaml -> deployment descript
+├── nodejs-express-api -> REST API
+│   ├── Dockerfile
+│   ├── node_modules
+│   ├── package.json
+│   └── server.js
+└── nodejs-express-backend -> Transformation/mediation API
+    ├── Dockerfile
+    ├── package.json
+    └── server.js
+```
+
 ### Step 1: Test nodejs-express-api locally
-Open one terminal window to start the server.
+Open one terminal window to start NodeJS Express REST API server. This API will be exposed by Kubernetes LoadBalancer component through port 80.
+
 ```bash
 cd nodejs-express-api
 node server.js
@@ -67,6 +95,7 @@ gcloud container clusters create multi-container-pod --num-nodes=3 --machine-typ
 ```
 
 ### Step 5: Set PROJECT_ID environment variable
+This variable will be referenced from next steps. So, it's useful to keep it as variable instead of a hardcoded value.
 ```
 export PROJECT_ID="$(gcloud config get-value project -q)"
 ```
@@ -77,7 +106,7 @@ cd nodejs-express-api
 docker build -t gcr.io/${PROJECT_ID}/nodejs-express-api:v1 .
 ```
 
-Push Docker build to Google Container Registry:
+Push Docker build to your own private [Google Container Registry in GCP](https://cloud.google.com/container-registry):
 ```
 gcloud docker -- push gcr.io/${PROJECT_ID}/nodejs-express-api:v1
 ```
@@ -101,10 +130,7 @@ $ kubectl apply -f kubernetes_nodejs_deployment.yaml
 ```
 
 ### Step 9: Expose port
-
-```bash
-$ kubectl expose deployment multicontainer-nodejs-deployment --type=LoadBalancer --port=80 --target-port=8080
-```
+This step will only expose port 8080 from nodejs-express-api container through standard http port 80, so it's accessible through your browser from a public IP address.
 
 ```bash
 $ kubectl expose deployment multicontainer-nodejs-deployment --type=LoadBalancer --port=80 --target-port=8080
@@ -121,6 +147,7 @@ multicontainer-nodejs-deployment   LoadBalancer   10.35.249.82   35.230.95.143  
 ```
 
 ### Step 10: Test access from nodejs-api to nodejs-backend
+From command get the public IP address and access your nodejs-express-api using a curl command. You can use your browser.
 
 ```
 $ curl 35.230.63.8/hello
@@ -131,6 +158,26 @@ Hello world-backend
 ```
 
 This response validates that nodejs-api can call nodejs-backend.
+
+### Step 11: Scale your application
+You can increase the number of replicas of your app by using `kubectl scale` command. Increase 5 more replicas of your multicontainer pod.
+
+```
+$ scale deployment multicontainer-nodejs-deployment --replicas=6
+deployment "multicontainer-nodejs-deployment" scaled
+
+$ kubectl get pods
+NAME                                                READY     STATUS    RESTARTS   AGE
+multicontainer-nodejs-deployment-66b758855c-6h27v   2/2       Running   0          18h
+multicontainer-nodejs-deployment-66b758855c-9fpx6   2/2       Running   0          18h
+multicontainer-nodejs-deployment-66b758855c-kb67r   2/2       Running   0          18h
+multicontainer-nodejs-deployment-66b758855c-mnpsn   2/2       Running   0          8s
+multicontainer-nodejs-deployment-66b758855c-nzjjp   2/2       Running   0          8s
+multicontainer-nodejs-deployment-66b758855c-tsz4h   2/2       Running   0          8s
+```
+
+### Step 12: Let me know your thoughts
+I want to know your feedback! You can reach  out to me on twitter [@dzuluaga](http://www.twitter.com/dzuluaga).
 
 ### Troubleshooting
 
